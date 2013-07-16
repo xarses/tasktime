@@ -15,7 +15,7 @@ ssh=/usr/bin/ssh
 retry=1
 user=root
 domain=localdomain
-pm_node=10.0.0.101
+pm_node=10.0.0.100
 
 instance=$1
 server=$2
@@ -45,7 +45,8 @@ if [[ "$server" != "$pm_node" ]] ; then
 	ssh-keygen -f ~/.ssh/known_hosts -R ${instance}.${domain}
 	echo "cleaning master"
 	ssh root@${pm_node} "/usr/bin/puppet cert clean ${instance}.${domain}"
-	ssh root@${pm_node} "/usr/bin/cobbler system edit --name ${instance} --netboot-enabled True"
+	ssh root@${pm_node} "/usr/bin/cobbler system edit --name ${instance} \
+		--netboot-enabled True"
 fi
 
 
