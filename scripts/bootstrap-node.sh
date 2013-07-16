@@ -31,9 +31,9 @@ while true
 do
   ssh -o UserKnownHostsFile=/dev/null \
       -o StrictHostKeyChecking=no \
-      $user@$server -C 'echo $HOSTNAME'
+      $user@$server -C 'echo $HOSTNAME' 2>/dev/null
   [[ $? -eq 0 ]] && return 0
-  echo NOT connected to [${server}] sleeping for $retry...
+  #echo NOT connected to [${server}] sleeping for $retry...
   sleep $retry
 done
 }
@@ -51,7 +51,7 @@ fi
 
 
 start=`date +%s.%N`
-
+echo "starting $instance"
 $virsh start $instance
 virt-viewer $instance & 
 
