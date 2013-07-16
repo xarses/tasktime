@@ -8,16 +8,23 @@
 #        ssh login. This requires GASSAPI disabled and a pre-populated 
 #        authorized_keys inside of the ks scripts.
 #
-# @usage: $0 <instance name> <ip>
+# @usage: $0 <instance name> <ip> [destroy]
 
 virsh=/usr/bin/virsh
 ssh=/usr/bin/ssh
 retry=1
 user=root
+domain=localdomain
+pm_node=10.0.0.101
 
 instance=$1
 server=$2
+destroy=$3
 
+if [ "$destroy" == "destroy" ] ; then
+	echo "destroying instance"
+	virsh destroy $instance
+fi
 
 ssh_connect () {
 while true
@@ -30,6 +37,16 @@ do
   sleep $retry
 done
 }
+
+if [[ "$server" != "$pm_node" ]] ; then
+	echo "cleaning local ssh"
+	ssh-keygen -f ~/.ssh/known_hosts -R ${server}
+	ssh-keygen -f ~/.ssh/known_hosts -R ${instance}
+	ssh-keygen -f ~/.ssh/known_hosts -R ${instance}.${domain}
+	echo "cleaning master"
+	ssh root@${pm_node} "/usr/bin/puppet cert clean ${instance}.${domain}"
+	ssh root@${pm_node} "/usr/bin/cobbler system edit --name ${instance} --netboot-enabled True"
+fi
 
 
 start=`date +%s.%N`
