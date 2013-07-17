@@ -8,7 +8,9 @@
 #
 # @usage: $0 <host> [host1 ... ]
 
-logdir="../logs/"
+source functions.sh
+logdir=${LOGBASE}`dnorm`/
+mkdir -p $logdi
 
 run_agent () {
  user=$1
@@ -16,16 +18,16 @@ run_agent () {
  time ssh $user@$server puppet agent \
    --{summarize,test,debug,evaltrace,color=false} 2>&1 | \
    gawk '{ print system("echo -n `date +%s.%N`"), $0; }' | \
-   tee ${logdir}${server}-puppet-agent-`date +'%Y%m%d_%M%S'`
+   tee ${logdir}${server}-puppet-agent-`dnorm`
 }
 
-start=`date +%s.%N`
+start=`dusec`
 for node in $@ ; 
 do
   run_agent root $node
 done
 
-end=`date +%s.%N`
+end=`dusec`
 
 echo "completed $@ in:"
 echo ${end}-${start} | bc
