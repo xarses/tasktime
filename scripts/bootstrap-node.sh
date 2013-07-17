@@ -10,6 +10,9 @@
 #
 # @usage: $0 <instance name> <ip> [destroy]
 
+
+source functions.sh
+
 virsh=/usr/bin/virsh
 ssh=/usr/bin/ssh
 retry=1
@@ -29,8 +32,7 @@ fi
 ssh_connect () {
 while true
 do
-  ssh -o UserKnownHostsFile=/dev/null \
-      -o StrictHostKeyChecking=no \
+  ssh ${SSHOPTS} \
       $user@$server -C 'echo $HOSTNAME' 2>/dev/null
   [[ $? -eq 0 ]] && return 0
   #echo NOT connected to [${server}] sleeping for $retry...
@@ -51,7 +53,7 @@ fi
 
 
 start=`date +%s.%N`
-echo "starting $instance"
+logf "$0 starting $instance"
 $virsh start $instance
 virt-viewer $instance & 
 
@@ -59,6 +61,6 @@ ssh_connect
 
 end=`date +%s.%N`
 
-echo ${end}-${start} | bc
+logf "$0 done with $instance in $(fexpr ${end} - ${start})"
 
 

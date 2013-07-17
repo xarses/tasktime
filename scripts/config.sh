@@ -14,3 +14,4 @@ LOGBASE="../logs/"
 BATCHLOG=${LOGBASE}/batch.log
 
 #
+SSHOPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "
