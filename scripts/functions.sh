@@ -13,10 +13,13 @@ dusec () {
 }
 
 dnorm () {
- date +%Y
+ date +%Y%m%d_%H%M
 }
 
 logf () {
-  echo `date +%s.%N`: $@ | tee -a ${BATCHLOG}
+  echo `dusec`: $@ | tee -a ${BATCHLOG}
 }
 
+fexpr () {
+  echo $@ | bc 2>/dev/null
+}

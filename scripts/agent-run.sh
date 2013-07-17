@@ -1,3 +1,4 @@
+
 #!/bin/bash
 #
 # @Copyright: Mirantis 2013-JUL-16
@@ -10,7 +11,7 @@
 
 source functions.sh
 logdir=${LOGBASE}`dnorm`/
-mkdir -p $logdi
+mkdir -p $logdir
 
 run_agent () {
  user=$1
@@ -22,13 +23,16 @@ run_agent () {
 }
 
 start=`dusec`
+
 for node in $@ ; 
 do
+  istart=`dusec`
+  logf "$0 started $node"
   run_agent root $node
+  iend=`dusec`
+  logf "$0 ended $node in $(fexpr $iend - $istart)"
 done
 
 end=`dusec`
 
-echo "completed $@ in:"
-echo ${end}-${start} | bc
-
+logf "$0 completed $@ in: $(fexpr ${end} - ${start})"
