@@ -13,7 +13,7 @@ logdir="../logs/"
 run_agent () {
  user=$1
  server=$2
- time ssh $user@server puppet agent \
+ time ssh $user@$server puppet agent \
    --{summarize,test,debug,evaltrace,color=false} 2>&1 | \
    gawk '{ print system("echo -n `date +%s.%N`"), $0; }' | \
    tee ${logdir}${server}-puppet-agent-`date +'%Y%m%d_%M%S'`
@@ -25,8 +25,8 @@ do
   run_agent root $node
 done
 
-end=`date +%s.%N'
+end=`date +%s.%N`
 
-echo completed $@ in:
+echo "completed $@ in:"
 echo ${end}-${start} | bc
 
