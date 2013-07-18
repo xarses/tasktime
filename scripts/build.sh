@@ -30,6 +30,17 @@ tear_down () {
   virsh destroy $n1
   virsh destroy $n2
   virsh destroy $n3
+  #restart puppet services on pm_node, this will help prevent deadlocked 
+  # pm_node
+  ssh root@${PMNODE} <<EOF
+/etc/init.d/thin stop
+/etc/init.d/nginx stop
+/etc/init.d/puppetdb stop
+/etc/init.d/thin start
+/etc/init.d/nginx start
+/etc/init.d/puppetdb start
+sleep 10
+EOF
 }
 
 

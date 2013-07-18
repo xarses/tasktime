@@ -15,3 +15,5 @@ BATCHLOG=${LOGBASE}/batch.log
 
 #
 SSHOPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "
+
+PMNODE=10.0.0.100
