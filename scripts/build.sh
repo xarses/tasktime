@@ -26,6 +26,17 @@ serial () {
   logf "$0 ended in $(fexpr $end - $start)"
 }
 
+semiserial () {
+  start=`dusec`
+  logf "$0 started"
+  ./bootstrap-node.sh $n1 $ni1
+  ./bootstrap-node.sh $n2 $ni2 &
+  ./bootstrap-node.sh $n3 $ni3 &
+  ./agent-run.sh $ni1 $ni2 $ni3 $ni1
+  end=`dusec`
+  logf "$0 ended in $(fexpr $end - $start)"
+}
+
 tear_down () {
   virsh destroy $n1
   virsh destroy $n2
@@ -45,4 +56,4 @@ EOF
 
 
 tear_down
-serial
+semiserial
