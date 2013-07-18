@@ -1,11 +1,10 @@
-
 #!/bin/bash
 #
 # @Copyright: Mirantis 2013-JUL-16
 # @author: awoodward
 #
 # @desc: this script will connect to hosts in serial order and run puppet 
-#		 agent with various options and record the output for later parsing
+#	 agent with various options and record the output for later parsing
 #
 # @usage: $0 <host> [host1 ... ]
 
@@ -18,7 +17,8 @@ run_agent () {
  server=$2
  time ssh ${SSHOPTS} $user@$server puppet agent \
    --{summarize,test,debug,evaltrace,color=false} 2>&1 | \
-   gawk '{ print system("echo -n `date +%s.%N`"), $0; }' | \
+   gawk '{ print system("echo -n `date +%s.%N`"), $0; } \ 
+         END {print system("echo -n `date %s.%N` _gas_ "}' | \
    tee ${logdir}${server}-puppet-agent-`dnorm`
 }
 
