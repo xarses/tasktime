@@ -17,8 +17,8 @@ run_agent () {
  server=$2
  time ssh ${SSHOPTS} $user@$server puppet agent \
    --{summarize,test,debug,evaltrace,color=false} 2>&1 | \
-   gawk '{ print system("echo -n `date +%s.%N`"), $0; } \ 
-         END {print system("echo -n `date %s.%N` _gas_ "}' | \
+   gawk '//  {print system("echo -n `date +%s.%N`"), $0; }  
+         END {print system("echo -n `date +%s.%N` _GAS_")}' | \
    tee ${logdir}${server}-puppet-agent-`dnorm`
 }
 
