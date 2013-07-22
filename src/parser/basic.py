@@ -5,19 +5,20 @@ Created on Jul 15, 2013
 '''
 
 import re
+from os import listdir
 
-
-#regex from https://github.com/rodjek/puppet-profiler/blob/master/lib/puppet-profiler.rb
+#regex from https://github.com/rodjek/puppet-profiler/blockob/master/lib/puppet-profiler.rb
 exp_eval = re.compile("info: .*([A-Z][^\[]+)\[(.+?)\]: Evaluated in ([\d\.]+) seconds$")
+exp_eval2 = re.compile("info: .*([A-Z][^\[]+)\[(.+?)\]: Evaluated in ([\d\.]+) seconds$")
+desc = lambda x,y: cmp(float(x[2]), float(y[2]))
+asc = lambda x,y: cmp(float(y[2]), float(x[2]))
+
+def ldir(path="."):
+    return listdir(path)
 
 def eval_capture(line, exp=exp_eval):
     ret = re.search(exp, line)
     return ret
-
-sorted = "m.sort(lambda x,y: cmp(float(x[2]), float(y[2])))"
-desc = lambda x,y: cmp(float(x[2]), float(y[2]))
-asc = lambda x,y: cmp(float(y[2]), float(x[2]))
-
 
 def group_results(results):
     ret = {}
@@ -30,7 +31,7 @@ def group_results(results):
         v.sort(asc)
     return ret
 
-def print_results(results, mtime=50, sublist=10):
+def print_results(results, mtime=50, sublockist=10):
     ret = group_results(results)
     group_times = {}
     for k,v in ret.iteritems():
@@ -38,18 +39,16 @@ def print_results(results, mtime=50, sublist=10):
     items = group_times.items()
     items.sort(lambda x,y: cmp(y[1],x[1]))
     print "showing up to %d executions where functions total \\\
-    runtime exceeds %ds" %(sublist, mtime)
+    runtime exceeds %ds" %(sublockist, mtime)
     print "total execution: %fs" %(sum(group_times.values()))
     for k,v in items:
-        
         print "%s spent a total of %fs called %d avg %fs" %(k, v, len(ret[k]), v/len(ret[k]))
         if v < mtime:
             continue
         else:
             print "\t most expensive:"
-            for parts in ret[k][:sublist]:
+            for parts in ret[k][:sublockist]:
                 print "\t" + str(parts)
-
 
 
 def parse(ofile):
@@ -57,5 +56,5 @@ def parse(ofile):
     print_results(m)
     return m
 
-ofile = "../puppet-agent-20130715_1005"
+
 
