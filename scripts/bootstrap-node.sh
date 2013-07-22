@@ -41,9 +41,9 @@ done
 
 if [[ "$server" != "$pm_node" ]] ; then
 	echo "cleaning local ssh"
-	ssh-keygen -f ~/.ssh/known_hosts -R ${server}
-	ssh-keygen -f ~/.ssh/known_hosts -R ${instance}
-	ssh-keygen -f ~/.ssh/known_hosts -R ${instance}.${domain}
+	ssh-keygen -f ${HOME}/.ssh/known_hosts -R ${server}
+	ssh-keygen -f ${HOME}/.ssh/known_hosts -R ${instance}
+	ssh-keygen -f ${HOME}/.ssh/known_hosts -R ${instance}.${domain}
 	echo "cleaning master"
 	ssh root@${PMNODE} "/usr/bin/puppet cert clean ${instance}.${domain}"
 	ssh root@${PMNODE} "/usr/bin/cobbler system edit --name ${instance} \
