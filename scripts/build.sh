@@ -47,9 +47,9 @@ semiserialruby191 () {
   ./bootstrap-node.sh $n1 $ni1 
   ./bootstrap-node.sh $n2 $ni2 &
   ./bootstrap-node.sh $n3 $ni3 &
-  ssh_connect root $ni1 <ruby191.sh 
-  ssh_connect root $ni2 <ruby191.sh &
-  ssh_connect root $ni3 <ruby191.sh &
+  ssh_connect root $ni1 <ruby191.sh 2>/dev/null
+  ssh_connect root $ni2 <ruby191.sh 2>/dev/null & 
+  ssh_connect root $ni3 <ruby191.sh 2>/dev/null &
   ./agent-run.sh $ni1 $ni2 $ni3 $ni1
   end=`dusec`
   logf "$0 ended in $(fexpr $end - $start)"

@@ -46,7 +46,7 @@ logf "$0 starting $instance"
 $virsh start $instance
 #virt-viewer $instance &disown
 
-ssh_connect $user $server 'echo $HOSTNAME'
+ssh_connect $user $server 'echo $HOSTNAME' 2>/dev/null
 
 end=`date +%s.%N`
 
