@@ -9,8 +9,6 @@
 # @usage: $0 <host> [host1 ... ]
 
 source functions.sh
-logdir=${LOGBASE}`dnorm`/
-mkdir -p $logdir
 
 run_agent () {
  user=$1
@@ -19,7 +17,7 @@ run_agent () {
    --{summarize,test,debug,evaltrace,color=false} 2>&1 | \
    gawk '//  {print system("echo -n `date +%s.%N`"), $0; }  
          END {print system("echo -n `date +%s.%N` _GAS_")}' | \
-   tee ${logdir}${server}-puppet-agent-`dnorm`
+   tee ${PP_LOGDIR}${server}-puppet-agent-`dnorm`
 }
 
 start=`dusec`

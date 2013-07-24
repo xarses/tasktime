@@ -23,6 +23,7 @@ instance=$1
 server=$2
 destroy=$3
 
+(
 if [ "$destroy" == "destroy" ] ; then
 	echo "destroying instance"
 	virsh destroy $instance
@@ -42,11 +43,12 @@ done
 if [[ "$server" != "$pm_node" ]] ; then
 	echo "cleaning local ssh"
 	ssh-keygen -f ${HOME}/.ssh/known_hosts -R ${server}
+	ssh-keygen -f ${HOME}/.ssh/known_hosts -R ${server}
 	ssh-keygen -f ${HOME}/.ssh/known_hosts -R ${instance}
 	ssh-keygen -f ${HOME}/.ssh/known_hosts -R ${instance}.${domain}
 	echo "cleaning master"
-	ssh root@${PMNODE} "/usr/bin/puppet cert clean ${instance}.${domain}"
-	ssh root@${PMNODE} "/usr/bin/cobbler system edit --name ${instance} \
+	ssh root@${PMNODE} "puppet cert clean ${instance}.${domain}"
+	ssh root@${PMNODE} "cobbler system edit --name ${instance} \
 		--netboot-enabled True"
 fi
 
@@ -54,7 +56,7 @@ fi
 start=`date +%s.%N`
 logf "$0 starting $instance"
 $virsh start $instance
-virt-viewer $instance & 
+#virt-viewer $instance &disown
 
 ssh_connect
 
@@ -62,4 +64,6 @@ end=`date +%s.%N`
 
 logf "$0 done with $instance in $(fexpr ${end} - ${start})"
 
-
+) 2>&1 | \
+   gawk '//  {print system("echo -n `date +%s.%N`"), $0; }                              END {print system("echo -n `date +%s.%N` _GAS_")}' | \
+   tee ${PP_LOGDIR}${server}-boot-strap-`dnorm`
