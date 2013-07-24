@@ -15,7 +15,6 @@ source functions.sh
 
 virsh=/usr/bin/virsh
 ssh=/usr/bin/ssh
-retry=1
 user=root
 domain=localdomain
 
@@ -28,17 +27,6 @@ if [ "$destroy" == "destroy" ] ; then
 	echo "destroying instance"
 	virsh destroy $instance
 fi
-
-ssh_connect () {
-while true
-do
-  ssh ${SSHOPTS} \
-      $user@$server -C 'echo $HOSTNAME' 2>/dev/null
-  [[ $? -eq 0 ]] && return 0
-  #echo NOT connected to [${server}] sleeping for $retry...
-  sleep $retry
-done
-}
 
 if [[ "$server" != "$pm_node" ]] ; then
 	echo "cleaning local ssh"
@@ -58,7 +46,7 @@ logf "$0 starting $instance"
 $virsh start $instance
 #virt-viewer $instance &disown
 
-ssh_connect
+ssh_connect $user $server 'echo $HOSTNAME'
 
 end=`date +%s.%N`
 

@@ -1,4 +1,5 @@
-l#!/bin/bash
+
+#!/bin/bash
 #
 # @copyright: Mirantis 2013-JUL-17
 # @author: awoodward
@@ -24,6 +25,21 @@ fexpr () {
   echo $@ | bc 2>/dev/null
 }
 
+ssh_connect () {
+user=$1
+host=$2
+shift $((2))
+command=${@}
+while true
+do
+  ssh ${SSHOPTS} -l $user $host $command  
+  [[ $? -eq 0 ]] && return 0
+  #echo NOT connected to [${server}] sleeping for $retry...
+  sleep 1
+done
+}
+
+## leave at bottom
 [ -z $PP_JOB ] && PP_JOB="ad-hoc"
 [ -z $PP_JOBNUM ] && PP_JOBNUM=`dnorm`
 PP_LOGDIR=${LOGBASE}/${PP_JOB}/${PP_JOBNUM}/
