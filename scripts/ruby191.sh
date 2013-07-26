@@ -11,8 +11,9 @@ ruby -rrbconfig -e 'puts RbConfig::CONFIG["CFLAGS"]'
 time ruby -e "count = 0; while(count < 100000000); count = count + 1; end; puts count"
 
 
-gem install puppet facter json stomp systemu ruby-shadow
+gem install json stomp systemu ruby-shadow
 gem install --version '<2.7.20' puppet
+gem install facter
 yum -y install augeas-devel
 gem install --version '<0.4.2' ruby-augeas
 rvm autolibs packages
