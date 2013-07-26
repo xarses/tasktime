@@ -25,6 +25,14 @@ fexpr () {
   echo $@ | bc 2>/dev/null
 }
 
+log () {
+
+ $@ 2>&1 | \
+   gawk '//  {print system("echo -n `date +%s.%N`"), $0; }
+         END {print system("echo -n `date +%s.%N` _GAS_")}'
+}
+
+
 ssh_connect () {
 user=$1
 host=$2
