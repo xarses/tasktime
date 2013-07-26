@@ -68,30 +68,40 @@ def conv_utime_elapsec(block, percision=3):
 class Line(object):
     def __init__(self, line, index=-1, parent=None, end=False):
         split = line.split(" ")
-        self.time = float(split[0])
+        self.utime = float(split.pop(0))
         self.line = join(split, " ")
         self.dur = -1
         self.parent = parent
+        self.index = index
         self.end = end
         self.type = 0
+        if self.line == "_GAS_0\n":
+            #This is a fix to be compatible with some old log files
+            self.utime = parent.lines[index-1].utime
+            self.end = True
+            self.dur = 0
     
     def _type(self):
         """attemps to detect message line type"""
-        for id, exp in TYPE_EXP:
+        for num, exp in TYPE_EXP:
             if exp:
                 result = re.search(self.line, exp)
                 if result is not None:
-                    self.type = id
+                    self.type = num
         
     def _calc(self):
         if self.parent is None:
             return
         if self.end:
             self.dur = 0
+            return
         index = self.index + 1
-        if index >= len(self.parent.lines - 1):
+        if index >= (len(self.parent.lines) - 1):
             nextline = self.parent.lines[index]
-            self.dur = nextline.time - self.time
+            self.dur = nextline.utime - self.utime
+    
+    def __repr__(self):
+        return "<Line:%d> %.3f (%.3fs)" %(self.index, self.utime, self.dur)
 
 class Block(object):
     def __init__(self, index=-1, parent=None):
@@ -100,65 +110,70 @@ class Block(object):
         self.event = None
         self.func = None
         self.match = None
-        self.time = -1
-        self.stime = 0
-        self.etime = 0
+        self.secs = -1
+        self.stime = -1
+        self.etime = -1
         self.parent = parent
-    
+        self._last = None
+        
     def __repr__(self):
         return "<%s[%s]> (%.2fs|%dl)" %(self.event, 
                                         self.func, 
-                                        self.time, 
+                                        self.secs, 
                                         len(self.lines))
     def percentof(self, parent=None):
         parent = parent or self.parent
         if parent is None:
             return 100.0
         else:
-            return self.time / parent.time
+            return self.secs / parent.secs
         
     _conv = conv_utime_elapsec
     
     def _calc(self):
-        if not self.etime: 
-            if self.lines[-1] == "_GAS_0\n":
-                #This is needed for a bug to the last line in the log from an old rev of
-                # agent-run.sh
-                t2 = float(self.lines[-2].split(" ")[0])
+        if self.etime == -1: 
+            if self.lines[-1].utime != -1:
+                self.etime=self.lines[-1].utime
             else:
-                t2 = float(self.lines[-1].split(" ")[0])
-        self.etime=t2
-        if not self.stime:
-            self.stime = float(self.lines[0].split(" ")[0])
-        self.time=t2 - self.stime
+                self.etime=self.lines[-2].utime
+        if self.stime == -1:
+            self.stime = self.lines[0].utime
+        self.secs=self.etime - self.stime
         return
     
     def prn(self):
         for line in self.lines:
-            line.strip()
-            print line
+            if hasattr(line, 'line'):
+                #this is a Line instance
+                line.line.strip()
+                print "<%d:%.3f (%.3fs)> %s" %(line.index, line.utime, line.dur, line.line)
+            else:
+                line.strip()
+                print line
     
     def large(self, percent=None, time=None):
         if time is not None:
-            return self.time >= time
+            return self.secs >= time
         if percent is not None:
             return self.percentof() >= percent
     
     def append(self, line):
-        #self.lines.append(line)
-        #if len(self.lines) == 1:
-        #    self.stime = float(line.split("")[0])
-        lindex = len(self.lines) - 1
+        lindex = len(self.lines)
         line = Line(line, lindex, self)
         self.lines.append(line)
-        self._last._calc()
+        if self._last:
+            self._last._calc()
         self._last = line
     
     def end(self):
-        self._last.end = True
-        self._last._calc()
-        self._calc()
-    
+        if self._last is not None:
+            self._last.end = True
+            self._last._calc()
+            self.etime = self._last.utime
+            self._calc()
+        else:
+            self.secs=-404
+        return
 
 class TaskLog(object):
     def __init__(self, name, node=None, task=None, etime=-1, constructor=Block):
@@ -168,27 +183,28 @@ class TaskLog(object):
         self.task = task
         self.constructor = constructor
         self.etime = etime 
-        self.time = -1
+        self.secs = -1
         self._last = None
     
     def _calc(self):
         begin = self.blocks[0]
-        if begin.time == -1:
+        if begin.secs == -1:
             begin._calc()
         end = self.blocks[-1]
-        if end.time == -1:
+        if end.secs == -1:
+            print end
             end._calc()
-        self.time = end.etime - begin.stime
+        self.secs = end.etime - begin.stime
     
     def __repr__(self):
-        return "<%s> (%.2f)" %(self.name, self.time)
+        return "<%s> (%.2f)" %(self.name, self.secs)
 
     def __len__(self):
         return self.blocks.__len__()    
 
     def large(self, percent=None, time=None):
         nodes = [item for item in self.blocks if item.large(percent, time)]
-        nodes.sort(lambda y,x: cmp(x.time, y.time))
+        nodes.sort(lambda y,x: cmp(x.secs, y.secs))
         return nodes
 
     def append(self, block=None):
@@ -213,15 +229,15 @@ class JobLog(object):
         self.model = model
         self.path = path
         self.tasks = []
-        self.time = -1
+        self.secs = -1
 
     def __repr__(self):
         return "<%s> tasks: %d, time: %.3f" %(self.model, 
                                               len(self.tasks), 
-                                              self.time)
+                                              self.secs)
     
     def _calc(self):
-        self.time = sum([item.time for item in self.tasks if hasattr(item, "time")])
+        self.secs = sum([item.secs for item in self.tasks if hasattr(item, "secs")])
     
     def append(self, item):
         self.tasks.append(item)
@@ -236,7 +252,7 @@ def loaddir(model, path='.'):
     return job
 
 def report(job, percent=0.01, time=None):
-    print "total runtime: %.2f" %job.time
+    print "total runtime: %.2f" %job.secs
     for task in job.tasks:
         print task
         for item in task.large(percent, time):
