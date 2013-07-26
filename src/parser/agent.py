@@ -66,10 +66,16 @@ def conv_utime_elapsec(block, percision=3):
         cur_ts = nex_ts
 
 class Line(object):
-    def __init__(self, line, index=-1, parent=None, end=False):
-        split = line.split(" ")
+    '''Line
+    A Line object represents a line of text and should have been passed with
+    a proceeding timestamp as unixtime (EPOCH). index is used for some ordering
+    functions and calculating time duration (as compared to another index 
+    from parent).
+    '''
+    def __init__(self, line, index=-1, parent=None, end=False, splitter=" "):
+        split = line.split(splitter)
         self.utime = float(split.pop(0))
-        self.line = join(split, " ")
+        self.line = join(split, splitter)
         self.dur = -1
         self.parent = parent
         self.index = index
@@ -100,10 +106,29 @@ class Line(object):
             nextline = self.parent.lines[index]
             self.dur = nextline.utime - self.utime
     
+    def islarge(self, percent=None, time=None):
+        '''islarge(percent=None, time=None) -> returns true / false if this is 
+        larger than percent or time.
+        '''
+        if time is not None:
+            return self.dur >= time
+        if percent is not None:
+            return (self.dur / self.parent.secs) >= percent
+
     def __repr__(self):
-        return "<Line:%d> %.3f (%.3fs)" %(self.index, self.utime, self.dur)
+        return "<%d:%.3f (%.3fs)> %s" %(self.index, 
+                                        self.utime, 
+                                        self.dur, 
+                                        self.line)
 
 class Block(object):
+    '''Block
+    represents a block of text within a file that corrilates to a task.
+    the parser will determine what a block should contain.
+    a block will further contain Lines() that would each contain timestamps
+    and data these are then processed to determine the amount of time that the
+    block took to execute
+    '''
     def __init__(self, index=-1, parent=None):
         self.index = index
         self.lines = []
@@ -122,9 +147,13 @@ class Block(object):
                                         self.secs, 
                                         len(self.lines))
     def percentof(self, parent=None):
+        '''percentof(parent=None) -> returns what percentage self.secs is of parent.
+        parent can be passed or will be retreived from self.parent. If not avilable 
+        returns 1.0
+        '''  
         parent = parent or self.parent
         if parent is None:
-            return 100.0
+            return 1.0
         else:
             return self.secs / parent.secs
         
@@ -142,16 +171,21 @@ class Block(object):
         return
     
     def prn(self):
+        '''prn() -> iterates over every line in the block and prints its
+        if it has strip, it strips it first
+        '''
         for line in self.lines:
-            if hasattr(line, 'line'):
-                #this is a Line instance
-                line.line.strip()
-                print "<%d:%.3f (%.3fs)> %s" %(line.index, line.utime, line.dur, line.line)
-            else:
+            if hasattr(line, 'strip'):
                 line.strip()
-                print line
+            print line
     
     def large(self, percent=None, time=None):
+        return [line for line in self.lines if line.islarge(percent, time)]
+
+    def islarge(self, percent=None, time=None):
+        '''islarge(percent=None, time=None) -> returns true / false if this is 
+        larger than percent or time.
+        '''
         if time is not None:
             return self.secs >= time
         if percent is not None:
@@ -159,11 +193,11 @@ class Block(object):
     
     def append(self, line):
         lindex = len(self.lines)
-        line = Line(line, lindex, self)
-        self.lines.append(line)
+        lif = Line(line, lindex, self)
+        self.lines.append(lif)
         if self._last:
             self._last._calc()
-        self._last = line
+        self._last = lif
     
     def end(self):
         if self._last is not None:
@@ -192,7 +226,6 @@ class TaskLog(object):
             begin._calc()
         end = self.blocks[-1]
         if end.secs == -1:
-            print end
             end._calc()
         self.secs = end.etime - begin.stime
     
@@ -203,7 +236,7 @@ class TaskLog(object):
         return self.blocks.__len__()    
 
     def large(self, percent=None, time=None):
-        nodes = [item for item in self.blocks if item.large(percent, time)]
+        nodes = [item for item in self.blocks if item.islarge(percent, time)]
         nodes.sort(lambda y,x: cmp(x.secs, y.secs))
         return nodes
 
@@ -246,7 +279,7 @@ def loaddir(model, path='.'):
     files = listdir(path)
     job = JobLog(model, path)
     for ofile in files:
-        job.append(parse(ofile))
+        job.append(parse(path + "/" + ofile))
     job._calc()
     job.tasks.sort(lambda x,y: cmp(x.blocks[0].stime, y.blocks[0].stime))
     return job
@@ -268,7 +301,7 @@ def parse(ofile, exp=exp_eval):
             if result is not None:
                 block.event = "pre-evaluates"
                 block = events.append()
-        block.lines.append(line)
+        block.append(line)
         result = re.search(exp, line)
         if result is not None:
             block.match = result.groups()
@@ -279,3 +312,8 @@ def parse(ofile, exp=exp_eval):
         block.event = "post-evaluates"
     events._calc()
     return events
+
+if __name__ == "__main__":
+    job = loaddir('.')
+    report(job)
+
