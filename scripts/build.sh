@@ -55,6 +55,20 @@ semiserialruby191 () {
   logf "$0 ended in $(fexpr $end - $start)"
 }
 
+semiserialruby191-puppet3 () {
+  start=`dusec`
+  logf "$0 started"
+  ./bootstrap-node.sh $n1 $ni1 
+  ./bootstrap-node.sh $n2 $ni2 &
+  ./bootstrap-node.sh $n3 $ni3 &
+  ssh_connect root $ni1 <ruby191-puppet3.sh 2>/dev/null
+  ssh_connect root $ni2 <ruby191-puppet3.sh 2>/dev/null & 
+  ssh_connect root $ni3 <ruby191-puppet3.sh 2>/dev/null &
+  ./agent-run.sh $ni1 $ni2 $ni3 $ni1
+  end=`dusec`
+  logf "$0 ended in $(fexpr $end - $start)"
+}
+
 semiserialpuppet2720 () {
   start=`dusec`
   logf "$0 started"
@@ -111,5 +125,5 @@ debug () {
 
 #debug
 tear_down
-semiserial
+semiserialruby191-puppet3
 
