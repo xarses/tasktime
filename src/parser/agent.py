@@ -8,8 +8,6 @@ exp_base = "^([\d\.]+) ([\w]): .*([A-Z][^\[]+)\[(.+?)\]: (.*)$"
 #regex from https://github.com/rodjek/puppet-profiler/blockob/master/lib/puppet-profiler.rb
 exp_eval = re.compile("[I,i]nfo: .*([A-Z][^\[]+)\[(.+?)\]: Evaluated in ([\d\.]+) seconds$")
 exp_eval2 = re.compile("info: .*([A-Z][^\[]+)\[(.+?)\]: Evaluated in ([\d\.]+) seconds$")
-desc = lambda x,y: cmp(float(x[2]), float(y[2]))
-asc = lambda x,y: cmp(float(y[2]), float(x[2]))
 
 TYPE_NAMES={0: "No Type",
             1: "debug",
@@ -235,6 +233,33 @@ class TaskLog(object):
     def __len__(self):
         return self.blocks.__len__()    
 
+    def summ(self, percent=None, time=None):
+        events = [ item.event for item in self.blocks if item.event is not None]
+        events = list(set(events))
+        times = {}
+        for event in events:
+            times[event] = {'time': sum([item.secs for item in self.blocks 
+                                        if item.event == event]),
+                            'items': [item for item in self.blocks 
+                                        if item.event == event 
+                                        and item.islarge(percent, time)
+                                     ],
+                            }
+            
+        events.sort(lambda y,x: cmp(times[x]["time"], times[y]["time"]))
+        #return events, times
+        def islarge(num):
+            if time is not None:
+                return num >= time
+            if percent is not None:
+                return (num / self.secs) >= percent
+        
+        for event in events:
+            if islarge(times[event]["time"]):
+                print event
+                for item in time[event]['items']:
+                    print "%.3f %s" % (item.percentof(), item)
+        
     def large(self, percent=None, time=None):
         nodes = [item for item in self.blocks if item.islarge(percent, time)]
         nodes.sort(lambda y,x: cmp(x.secs, y.secs))
