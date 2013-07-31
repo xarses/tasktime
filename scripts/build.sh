@@ -5,12 +5,12 @@
 # @desc: master function for building entire node set
 #
 
+source functions.sh
+
 [ -z $PP_JOB ] && PP_JOB="ad-hoc"
 [ -z $PP_JOBNUM ] && PP_JOBNUM=`dnorm`
 export PP_JOB
 export PP_JOBNUM
-
-source functions.sh
 
 n1=fuel-controller-01
 ni1=10.0.0.101
@@ -111,5 +111,5 @@ debug () {
 
 #debug
 tear_down
-semiserialpuppet2720
+semiserial
 
