@@ -1,5 +1,11 @@
 #!/bin/bash
 
+#TODO hack: proxy needs to be paramateriezed some how
+export proxy="http://10.0.0.100:3128"
+export http_proxy=$proxy
+export https_proxy=$proxy
+export RSYNC_PROXY=$proxy
+
 wget https://get.rvm.io/
 chmod +x rvm-installer
 ./rvm-installer --ruby=1.9.3
