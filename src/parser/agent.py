@@ -24,7 +24,7 @@ TYPE_EXP = {0: None,
             2: re.compile("(?i)info: .*"),
             3: re.compile("(?i)notice: .*"),
             4: re.compile("(?i)warning: .*"),
-            5: re.compile("(?i)error: .*"),
+            5: re.compile("(?i)err.*: .*"),
             6: re.compile("(?i)critical: .*"),
             7: re.compile("(?i)fail: .*"),
             }
@@ -34,34 +34,6 @@ TYPE_ISERROR = [4,5,6,7]
 
 def ldir(path="."):
     return listdir(path)
-
-def conv_utime_elapsec(block, percision=3):
-    """converts unix time stamps in a block object to seconds elapsed
-    percision defaults to 3 decimial places
-    """
-    def get_ts(line):
-        return float(line.split(" ")[0])
-    def replace_ts(line, ts):
-        parts = line.split(" ")
-        parts[0] = ts
-        return join(parts, " ")
-    total = 0.0
-    cur = block.lines[0]
-    cur_ts = get_ts(cur)
-    for index in range(len(block.lines) ):
-        if index + 1 >= len(block.lines):
-            #trick out the last line to noop itself
-            nex = cur
-            nex_ts = cur_ts
-        else:
-            nex = block.lines[index + 1]
-            nex_ts=get_ts(nex)
-        rt = round(nex_ts - cur_ts, percision)
-        ts = "%.3f (%.3fs)" % (total, rt)
-        block.lines[index-1] = replace_ts(cur, ts)
-        total += rt
-        cur = nex
-        cur_ts = nex_ts
 
 class Line(object):
     '''Line
@@ -154,8 +126,6 @@ class Block(object):
             return 1.0
         else:
             return self.secs / parent.secs
-        
-    _conv = conv_utime_elapsec
     
     def _calc(self):
         if self.etime == -1: 
@@ -233,6 +203,7 @@ class TaskLog(object):
     def __len__(self):
         return self.blocks.__len__()    
 
+    #TODO:fixme, this is junk and dosen't work well
     def summ(self, percent=None, time=None):
         events = [ item.event for item in self.blocks if item.event is not None]
         events = list(set(events))

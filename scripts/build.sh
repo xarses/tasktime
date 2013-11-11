@@ -125,5 +125,5 @@ debug () {
 
 #debug
 tear_down
-semiserialruby191-puppet3
+semiserial
 
